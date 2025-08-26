@@ -1,0 +1,26 @@
+{
+  "exam_settings": {
+    "timer in minutes": 60,   
+    "marks_per_question": 15
+  },
+  "questions": [
+    {
+      "id": 1,
+      "question": "What is the capital of France?",
+      "options": ["Berlin", "Madrid", "Paris", "Rome"],
+      "answer": "Paris"
+    },
+    {
+      "id": 2,
+      "question": "Which data structure uses FIFO (First In First Out)?",
+      "options": ["Stack", "Queue", "Heap", "Tree"],
+      "answer": "Queue"
+    },
+    {
+      "id": 3,
+      "question": "React is mainly used for?",
+      "options": ["Database", "Styling", "Frontend UI", "Operating System"],
+      "answer": "Frontend UI"
+    }
+  ]
+}
