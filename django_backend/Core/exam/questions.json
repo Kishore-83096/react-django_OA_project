@@ -1,6 +1,6 @@
 {
   "exam_settings": {
-    "timer in minutes": 60,   
+    "timer in minutes": 1,   
     "marks_per_question": 15
   },
   "questions": [
