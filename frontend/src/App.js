@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./pages/dashboard";
 import LoginPage from "./pages/login";
@@ -8,7 +8,16 @@ import ExamPage from "./pages/exampage";
 import ResultsPage from "./pages/result";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("username"));
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+
+  // Optional: update login state when token changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setIsLoggedIn(!!localStorage.getItem("token"));
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   return (
     <Router>
@@ -27,9 +36,7 @@ function App() {
         {/* Register route */}
         <Route
           path="/register"
-          element={
-            isLoggedIn ? <Navigate to="/dashboard" /> : <RegisterPage />
-          }
+          element={isLoggedIn ? <Navigate to="/dashboard" /> : <RegisterPage />}
         />
 
         {/* Dashboard route protected */}
@@ -43,12 +50,20 @@ function App() {
           path="/exam"
           element={isLoggedIn ? <ExamPage /> : <Navigate to="/login" />}
         />
+
         {/* Results route protected */}
         <Route
           path="/results"
-          element={isLoggedIn ? <ResultsPage /> : <Navigate to="/login" />}
+          element={
+            localStorage.getItem("username") ? <ResultsPage /> : <Navigate to="/login" />
+          }
         />
-      </Routes> 
+
+
+
+        {/* Catch-all route */}
+        <Route path="*" element={<Navigate to={isLoggedIn ? "/dashboard" : "/login"} />} />
+      </Routes>
     </Router>
   );
 }

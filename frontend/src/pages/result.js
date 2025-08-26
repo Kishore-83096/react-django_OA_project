@@ -10,12 +10,14 @@ function ResultsPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Get username from localStorage
     const username = localStorage.getItem("username");
     if (!username) {
-      navigate("/login"); // protect page
+      navigate("/login");
       return;
     }
 
+    // Fetch result from backend
     axios
       .get(`http://127.0.0.1:8000/api/results/?username=${username}`)
       .then((res) => {
@@ -24,7 +26,11 @@ function ResultsPage() {
       })
       .catch((err) => {
         console.error(err);
-        setError(err.response?.data?.error || "Failed to load result");
+        setError(
+          err.response?.data?.error ||
+          err.response?.data?.detail ||
+          "Failed to load result"
+        );
         setLoading(false);
       });
   }, [navigate]);
@@ -33,7 +39,7 @@ function ResultsPage() {
   if (error) return <Layout><p style={{ color: "red" }}>{error}</p></Layout>;
   if (!result) return <Layout><p>No result found.</p></Layout>;
 
-  const { total_score, answers, submitted_at } = result;
+  const { total_score, answers = {}, submitted_at } = result;
 
   return (
     <Layout>
@@ -44,22 +50,26 @@ function ResultsPage() {
 
         <div style={{ marginTop: "20px", maxWidth: "600px", margin: "0 auto" }}>
           <h3>Answers</h3>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={{ border: "1px solid #ccc", padding: "8px" }}>Question ID</th>
-                <th style={{ border: "1px solid #ccc", padding: "8px" }}>Selected Answer</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(answers).map(([qid, ans]) => (
-                <tr key={qid}>
-                  <td style={{ border: "1px solid #ccc", padding: "8px" }}>{qid}</td>
-                  <td style={{ border: "1px solid #ccc", padding: "8px" }}>{ans}</td>
+          {Object.keys(answers).length === 0 ? (
+            <p>No answers submitted.</p>
+          ) : (
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={{ border: "1px solid #ccc", padding: "8px" }}>Question ID</th>
+                  <th style={{ border: "1px solid #ccc", padding: "8px" }}>Selected Answer</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {Object.entries(answers).map(([qid, ans]) => (
+                  <tr key={qid}>
+                    <td style={{ border: "1px solid #ccc", padding: "8px" }}>{qid}</td>
+                    <td style={{ border: "1px solid #ccc", padding: "8px" }}>{ans}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         <button
