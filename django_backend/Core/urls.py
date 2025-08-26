@@ -9,6 +9,6 @@ urlpatterns = [
     path('exam/', views.get_exam_questions, name='start_exam'),
     path('save_answer/', views.save_answer, name='save_answer'),
     path('submit_exam/', views.submit_exam, name='submit_exam'),
-    path('results/', views.get_test_result, name='get_test_results'),
+    path('results/', views.get_test_result, name='get_test_result'),
 
 ]

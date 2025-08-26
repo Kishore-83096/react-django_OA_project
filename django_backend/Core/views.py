@@ -83,6 +83,8 @@ def register_user(request):
 
 
 
+from rest_framework.authtoken.models import Token
+
 @api_view(["POST"])
 @csrf_exempt
 def login_user(request):
@@ -95,7 +97,6 @@ def login_user(request):
             if not username_or_email or not password:
                 return JsonResponse({"error": "Username/Email and password are required"}, status=400)
 
-            # Check if input is email or username
             if "@" in username_or_email:
                 try:
                     user_obj = User.objects.get(email=username_or_email)
@@ -105,11 +106,16 @@ def login_user(request):
             else:
                 username = username_or_email
 
-            # Authenticate user
             user = authenticate(username=username, password=password)
 
             if user is not None:
-                return JsonResponse({"message": "Login successful", "username": user.username}, status=200)
+                # Create or get token
+                token, created = Token.objects.get_or_create(user=user)
+                return JsonResponse({
+                    "message": "Login successful",
+                    "username": user.username,
+                    "token": token.key
+                }, status=200)
             else:
                 return JsonResponse({"error": "Invalid credentials"}, status=400)
 
@@ -352,39 +358,35 @@ def submit_exam(request):
 
 
 
+from rest_framework.decorators import api_view
+from django.http import JsonResponse
+from .models import ExamAttempt
+from django.contrib.auth.models import User
+from django.contrib.auth.models import User
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+from .models import ExamAttempt  # your model
+
 @api_view(["GET"])
 def get_test_result(request):
-    print("Fetching test result...")
-    """
-    Returns the latest exam result for a given username.
-    Expected query param: ?username=user1
-    """
     username = request.GET.get("username")
     if not username:
-        return JsonResponse({"error": "username is required"}, status=400)
+        return Response({"error": "username is required"}, status=400)
 
     try:
         user = User.objects.get(username=username)
-
-        # Get latest completed attempt
         attempt = ExamAttempt.objects.filter(user=user, completed=True).order_by('-submitted_at').first()
-
+        print("Fetched attempt:", attempt)
         if not attempt:
-            return JsonResponse({"error": "No completed exam found"}, status=404)
-        
-        print("Attempt found:", attempt)
-        print("Total Score:", attempt.total_score)
-        print("Answers:", attempt.answers) 
-        print("Submitted at:", attempt.submitted_at)
+            return Response({"error": "No completed exam found"}, status=404)
 
-        return JsonResponse({
-            "username": username,
+        return Response({
+            "username": user.username,
             "total_score": attempt.total_score,
             "answers": attempt.answers,
             "submitted_at": attempt.submitted_at,
-        }, status=200)
+        })
 
     except User.DoesNotExist:
-        return JsonResponse({"error": "User not found"}, status=404)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        return Response({"error": "User not found"}, status=404)
