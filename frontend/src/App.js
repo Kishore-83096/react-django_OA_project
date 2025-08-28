@@ -8,13 +8,14 @@ import ExamPage from "./pages/exampage";
 import ResultsPage from "./pages/result";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  // ✅ Use the correct key for token storage
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("access_token"));
 
-  // Optional: update login state when token changes
   useEffect(() => {
     const handleStorageChange = () => {
-      setIsLoggedIn(!!localStorage.getItem("token"));
+      setIsLoggedIn(!!localStorage.getItem("access_token"));
     };
+
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
@@ -31,25 +32,25 @@ function App() {
         {/* Login route */}
         <Route path="/login" element={<LoginPage />} />
 
+        {/* Dashboard route (protected) */}
+        <Route
+          path="/dashboard"
+          element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" />}
+        />
 
-        {/* Dashboard route protected */}
-        <Route path="/dashboard" element={<Dashboard />} />
-
-        {/* Exam route protected */}
+        {/* Exam route (protected) */}
         <Route
           path="/exam"
           element={isLoggedIn ? <ExamPage /> : <Navigate to="/login" />}
         />
 
-        {/* Results route protected */}
+        {/* Results route (protected by username presence) */}
         <Route
           path="/results"
           element={
             localStorage.getItem("username") ? <ResultsPage /> : <Navigate to="/login" />
           }
         />
-
-
 
         {/* Catch-all route */}
         <Route path="*" element={<Navigate to={isLoggedIn ? "/dashboard" : "/login"} />} />
