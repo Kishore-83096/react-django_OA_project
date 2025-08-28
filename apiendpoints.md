@@ -126,6 +126,7 @@
 ## 7. Save Answer API
 **Method:** POST  
 **URL:** `http://127.0.0.1:8000/api/save_answer/`  
+**Authorization:** Bearer Token Required  
 **Request:**
 ```json
 {
@@ -148,6 +149,7 @@
 ## 8. Submit Exam API
 **Method:** POST  
 **URL:** `http://127.0.0.1:8000/api/submit_exam/`  
+**Authorization:** Bearer Token Required  
 **Request:**
 ```json
 {
@@ -176,6 +178,7 @@
 ## 9. Results API
 **Method:** GET  
 **URL:** `http://127.0.0.1:8000/api/results/`  
+**Authorization:** Bearer Token Required  
 **Response:**
 ```json
 {
