@@ -1,94 +1,71 @@
+// src/pages/ResultPage.js
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import Layout from "../components/layout";
+import Layout from "../components/layout"; // Layout already includes Header
 import { useNavigate } from "react-router-dom";
 
-function ResultsPage() {
+function ResultPage() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const accessToken = localStorage.getItem("access_token");
+
   useEffect(() => {
-    // Get username from localStorage
-    const username = localStorage.getItem("username");
-    if (!username) {
+    if (!accessToken) {
       navigate("/login");
       return;
     }
 
-    // Fetch result from backend
     axios
-      .get(`http://127.0.0.1:8000/api/results/?username=${username}`)
+      .get("http://127.0.0.1:8000/api/results/", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
       .then((res) => {
         setResult(res.data);
         setLoading(false);
       })
       .catch((err) => {
         console.error(err);
-        setError(
-          err.response?.data?.error ||
-          err.response?.data?.detail ||
-          "Failed to load result"
-        );
-        setLoading(false);
+        if (err.response && err.response.status === 401) {
+          // Token invalid or expired
+          localStorage.clear();
+          navigate("/login");
+        } else {
+          setError(err.response?.data?.error || "Failed to fetch results");
+          setLoading(false);
+        }
       });
-  }, [navigate]);
+  }, [accessToken, navigate]);
 
-  if (loading) return <Layout><p>Loading result...</p></Layout>;
-  if (error) return <Layout><p style={{ color: "red" }}>{error}</p></Layout>;
-  if (!result) return <Layout><p>No result found.</p></Layout>;
+  if (loading) return <Layout><p>Loading results...</p></Layout>;
+  if (error) return <Layout><p className="text-red-500">{error}</p></Layout>;
+  if (!result) return <Layout><p>No results found.</p></Layout>;
 
-  const { total_score, answers = {}, submitted_at } = result;
+  const { username, total_score, answers, submitted_at } = result;
 
   return (
     <Layout>
-      <div style={{ textAlign: "center", marginTop: "20px" }}>
-        <h2>Exam Result</h2>
-        <p><strong>Submitted At:</strong> {new Date(submitted_at).toLocaleString()}</p>
+      <div className="max-w-2xl mx-auto mt-6 bg-white p-6 rounded shadow-md">
+        <h2 className="text-2xl font-bold text-indigo-700 mb-4">Exam Result</h2>
+        <p><strong>Username:</strong> {username}</p>
         <p><strong>Total Score:</strong> {total_score}</p>
+        <p><strong>Submitted At:</strong> {new Date(submitted_at).toLocaleString()}</p>
 
-        <div style={{ marginTop: "20px", maxWidth: "600px", margin: "0 auto" }}>
-          <h3>Answers</h3>
-          {Object.keys(answers).length === 0 ? (
-            <p>No answers submitted.</p>
-          ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr>
-                  <th style={{ border: "1px solid #ccc", padding: "8px" }}>Question ID</th>
-                  <th style={{ border: "1px solid #ccc", padding: "8px" }}>Selected Answer</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(answers).map(([qid, ans]) => (
-                  <tr key={qid}>
-                    <td style={{ border: "1px solid #ccc", padding: "8px" }}>{qid}</td>
-                    <td style={{ border: "1px solid #ccc", padding: "8px" }}>{ans}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+        <div className="mt-4">
+          <h3 className="text-xl font-semibold mb-2">Answers:</h3>
+          <ul className="list-disc list-inside">
+            {answers && Object.keys(answers).map((qid) => (
+              <li key={qid}>
+                <strong>Q{qid}:</strong> {answers[qid]}
+              </li>
+            ))}
+          </ul>
         </div>
-
-        <button
-          onClick={() => navigate("/dashboard")}
-          style={{
-            marginTop: "20px",
-            padding: "10px 20px",
-            background: "#6a5acd",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          Back to Dashboard
-        </button>
       </div>
     </Layout>
   );
 }
 
-export default ResultsPage;
+export default ResultPage;

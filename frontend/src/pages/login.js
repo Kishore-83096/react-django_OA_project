@@ -1,66 +1,89 @@
+// src/pages/LoginPage.js
 import React, { useState } from "react";
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
-function LoginPage({ onLogin }) { // Accept onLogin as a prop
-  const [usernameOrEmail, setUsernameOrEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+function LoginPage() {
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({ username: "", password: "" });
+  const [error, setError] = useState("");
 
-  const handleLogin = (e) => {
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
-    axios
-      .post("http://127.0.0.1:8000/api/login/", {
-        username: usernameOrEmail, // backend accepts username OR email
-        email: usernameOrEmail,
-        password: password,
-      })
-      .then((res) => {
-        alert("Login successful!");
-        localStorage.setItem("username", res.data.username); // store login info
-        if (onLogin) onLogin(); // notify App that user is logged in
-        navigate("/dashboard"); // redirect to dashboard after login
-      })
-      .catch((err) => {
-        setError(err.response?.data?.error || "Login failed");
-      });
+    try {
+      const response = await axios.post(
+        "http://127.0.0.1:8000/api/login/",
+        formData,
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      // Save tokens in localStorage
+      localStorage.setItem("access_token", response.data.access);
+      localStorage.setItem("refresh_token", response.data.refresh);
+      localStorage.setItem("username", response.data.username);
+
+      // Redirect to dashboard or protected page
+      navigate("/dashboard");
+    } catch (err) {
+      if (err.response && err.response.data.error) {
+        setError(err.response.data.error);
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+    }
   };
 
   return (
-    <div className="login-container" style={{ textAlign: "center", marginTop: "50px" }}>
-      <h2>Login</h2>
-      <form onSubmit={handleLogin} style={{ display: "inline-block", textAlign: "left" }}>
-        <div>
-          <label>Username / Email:</label>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-200 to-purple-300">
+      <div className="bg-white shadow-md rounded-lg p-8 w-full max-w-md">
+        <h2 className="text-2xl font-bold text-center text-indigo-700 mb-6">
+          Login
+        </h2>
+
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
-            value={usernameOrEmail}
-            onChange={(e) => setUsernameOrEmail(e.target.value)}
+            name="username"
+            placeholder="Username or Email"
+            value={formData.username}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
             required
-            style={{ display: "block", marginBottom: "10px", width: "250px" }}
           />
-        </div>
-        <div>
-          <label>Password:</label>
+
           <input
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
             required
-            style={{ display: "block", marginBottom: "10px", width: "250px" }}
           />
-        </div>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        <button type="submit" style={{ width: "250px" }}>Login</button>
-      </form>
-      <p style={{ marginTop: "20px" }}>
-        Don’t have an account? <Link to="/register">Register</Link>
-      </p>
-      <p>
-        <Link to="/">Go Home</Link>
-      </p>
+
+          <button
+            type="submit"
+            className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition"
+          >
+            Login
+          </button>
+        </form>
+
+        <p className="text-center text-gray-600 mt-4">
+          Don't have an account?{" "}
+          <Link to="/register" className="text-indigo-600 hover:underline">
+            Register
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

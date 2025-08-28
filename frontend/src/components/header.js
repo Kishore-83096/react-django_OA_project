@@ -1,63 +1,70 @@
+// src/components/Header.js
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 function Header() {
   const navigate = useNavigate();
-  const username = localStorage.getItem("username");
+  const username = localStorage.getItem("username"); // Save username on login
+  const accessToken = localStorage.getItem("access_token");
 
   const handleLogout = () => {
-    localStorage.removeItem("username"); // clear user session
-    navigate("/"); // redirect to launch/home page
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("username");
+    navigate("/login"); // redirect to login page
   };
 
-  if (!username) return null; // hide header if not logged in
+  const handleDashboardClick = (e) => {
+    e.preventDefault();
+    if (accessToken) {
+      navigate("/dashboard");
+    } else {
+      // Token missing or expired
+      localStorage.clear();
+      navigate("/login");
+    }
+  };
 
   return (
-    <header
-      style={{
-        background: "#6a5acd",
-        padding: "15px",
-        color: "white",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}
-    >
-      <h2 style={{ margin: 0 }}>My App</h2>
-      <nav style={{ display: "flex", alignItems: "center" }}>
-        <Link to="/dashboard" style={{ margin: "0 15px", color: "white" }}>
-          Dashboard
-        </Link>
-        <Link to="/profile" style={{ margin: "0 15px", color: "white" }}>
-          Profile
-        </Link>
-        <Link to="/settings" style={{ margin: "0 15px", color: "white" }}>
-          Settings
-        </Link>
-        <Link to="/results" style={{ margin: "0 15px", color: "white" }}>
-          Test Result
-        </Link>
-
-        {/* Show logged in username */}
-        <span style={{ marginLeft: "20px", fontWeight: "bold" }}>
-          Hi, {username}
-        </span>
-
+    <header className="bg-indigo-600 text-white shadow-md">
+      <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        {/* Logo / App Name */}
         <button
-          onClick={handleLogout}
-          style={{
-            marginLeft: "20px",
-            background: "white",
-            color: "#6a5acd",
-            border: "none",
-            padding: "6px 12px",
-            cursor: "pointer",
-            borderRadius: "4px",
-          }}
+          onClick={handleDashboardClick}
+          className="text-xl font-bold bg-transparent border-none cursor-pointer"
         >
-          Logout
+          Exam Portal
         </button>
-      </nav>
+
+        {/* Navigation Links */}
+        <nav className="flex items-center space-x-4">
+          <span className="font-medium">Hello, {username}</span>
+          <Link
+            to="/profile"
+            className="hover:bg-indigo-500 px-3 py-1 rounded transition"
+          >
+            Profile
+          </Link>
+          <Link
+            to="/settings"
+            className="hover:bg-indigo-500 px-3 py-1 rounded transition"
+          >
+            Settings
+          </Link>
+          <Link
+            to="/results"
+            className="hover:bg-indigo-500 px-3 py-1 rounded transition"
+          >
+            Test Results
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded transition"
+          >
+            Logout
+          </button>
+        </nav>
+      </div>
     </header>
   );
 }

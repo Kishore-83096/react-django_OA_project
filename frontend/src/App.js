@@ -25,25 +25,15 @@ function App() {
         {/* Root shows launch page */}
         <Route path="/" element={<LaunchPage />} />
 
-        {/* Login route */}
-        <Route
-          path="/login"
-          element={
-            isLoggedIn ? <Navigate to="/dashboard" /> : <LoginPage onLogin={() => setIsLoggedIn(true)} />
-          }
-        />
-
         {/* Register route */}
-        <Route
-          path="/register"
-          element={isLoggedIn ? <Navigate to="/dashboard" /> : <RegisterPage />}
-        />
+        <Route path="/register" element={<RegisterPage />} />
+
+        {/* Login route */}
+        <Route path="/login" element={<LoginPage />} />
+
 
         {/* Dashboard route protected */}
-        <Route
-          path="/dashboard"
-          element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" />}
-        />
+        <Route path="/dashboard" element={<Dashboard />} />
 
         {/* Exam route protected */}
         <Route

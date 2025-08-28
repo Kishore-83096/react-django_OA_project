@@ -20,16 +20,34 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view
 import os, json
 from django.conf import settings
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate, get_user_model
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+import json
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+
+User = get_user_model()
+
+
 
 
 # Create your views here.
 @api_view(["GET"])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def get_data(request):
     data = {"message": "This a test!"}
     return Response(data)
 
 
 @api_view(["GET"])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def welcome(request):
     return Response({
@@ -38,94 +56,102 @@ def welcome(request):
     })
 
 
+
 @api_view(["POST"])
-@csrf_exempt
+@authentication_classes([])
+@permission_classes([AllowAny])
 def register_user(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body.decode("utf-8"))
-            username = data.get("username")
-            email = data.get("email")
-            password = data.get("password")
-            confirm_password = data.get("confirm_password")
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+        username = data.get("username")
+        email = data.get("email")
+        password = data.get("password")
+        confirm_password = data.get("confirm_password")
 
-            # Validation
-            if not username or not email or not password or not confirm_password:
-                return JsonResponse({"error": "All fields (username, email, password, confirm_password) are required"}, status=400)
+        if not username or not email or not password or not confirm_password:
+            return Response({"error": "All fields are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-            if password != confirm_password:
-                return JsonResponse({"error": "Passwords do not match"}, status=400)
+        if password != confirm_password:
+            return Response({"error": "Passwords do not match"}, status=status.HTTP_400_BAD_REQUEST)
 
-            if User.objects.filter(username=username).exists():
-                return JsonResponse({"error": "Username already taken"}, status=400)
+        if User.objects.filter(username=username).exists():
+            return Response({"error": "Username already taken"}, status=status.HTTP_400_BAD_REQUEST)
 
-            if User.objects.filter(email=email).exists():
-                return JsonResponse({"error": "Email already registered"}, status=400)
+        if User.objects.filter(email=email).exists():
+            return Response({"error": "Email already registered"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Create user
-            user = User.objects.create(
-                username=username,
-                email=email,
-                password=make_password(password)
-            )
-            return JsonResponse({
-                "message": "User registered successfully",
-                "username": user.username,
-                "email": user.email
-            }, status=201)
+        # Correct way to create and save user
+        user = User.objects.create_user(username=username, email=email, password=password)
 
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+        return Response({
+            "message": "User registered successfully",
+            "username": user.username,
+            "email": user.email
+        }, status=status.HTTP_201_CREATED)
 
-    return JsonResponse({"error": "Only POST method allowed"}, status=405)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
 
 
-from rest_framework.authtoken.models import Token
+
+
+
+
 
 @api_view(["POST"])
 @csrf_exempt
+@authentication_classes([])
+@permission_classes([AllowAny])
 def login_user(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body.decode("utf-8"))
-            username_or_email = data.get("username") or data.get("email")
-            password = data.get("password")
+    """
+    JWT login view: accepts username or email + password,
+    returns access & refresh tokens on success.
+    """
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+        username_or_email = data.get("username") or data.get("email")
+        password = data.get("password")
 
-            if not username_or_email or not password:
-                return JsonResponse({"error": "Username/Email and password are required"}, status=400)
+        if not username_or_email or not password:
+            return Response(
+                {"error": "Username/Email and password are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-            if "@" in username_or_email:
-                try:
-                    user_obj = User.objects.get(email=username_or_email)
-                    username = user_obj.username
-                except User.DoesNotExist:
-                    return JsonResponse({"error": "Invalid email or password"}, status=400)
-            else:
-                username = username_or_email
+        # If user enters email instead of username
+        if "@" in username_or_email:
+            try:
+                user_obj = User.objects.get(email=username_or_email)
+                username = user_obj.username
+            except User.DoesNotExist:
+                return Response(
+                    {"error": "Invalid email or password"}, status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            username = username_or_email
 
-            user = authenticate(username=username, password=password)
+        user = authenticate(username=username, password=password)
 
-            if user is not None:
-                # Create or get token
-                token, created = Token.objects.get_or_create(user=user)
-                return JsonResponse({
+        if user is not None:
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            return Response(
+                {
                     "message": "Login successful",
                     "username": user.username,
-                    "token": token.key
-                }, status=200)
-            else:
-                return JsonResponse({"error": "Invalid credentials"}, status=400)
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                },
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
 
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
-
-    return JsonResponse({"error": "Only POST method allowed"}, status=405)
-
-
-
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -133,24 +159,31 @@ def login_user(request):
 
 
 
+
+
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.conf import settings
+import json
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def user_dashboard(request):
     """
-    Dashboard data:
-    - username
+    JWT-protected dashboard data:
+    - username (from JWT)
     - exam availability
     - total number of questions
     - total marks (marks_per_question * total_questions)
     - exam timer
     """
-    username = request.GET.get("username", "Guest")
+    user = request.user
+    username = user.username
 
     # JSON path inside Core/exam
     json_path = (settings.BASE_DIR / "Core" / "exam" / "questions.json").resolve()
-    print("Resolved JSON path:", json_path)
-    print("Exists?", json_path.exists())
-
     exam_available = False
     total_questions = 0
     total_marks = 0
@@ -173,7 +206,7 @@ def user_dashboard(request):
     else:
         print("File does not exist")
 
-    return JsonResponse({
+    return Response({
         "username": username,
         "exam_available": exam_available,
         "total_questions": total_questions,
@@ -197,19 +230,14 @@ from .models import ExamAttempt
 from django.conf import settings
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_exam_questions(request):
     """
-    Returns all exam questions (id, question text, options)
-    and global exam settings (timer, marks per question).
-    Also creates/retrieves an incomplete ExamAttempt for the user.
+    Returns all exam questions for the authenticated user.
     """
-    username = request.GET.get("username")
-    if not username:
-        return JsonResponse({"error": "username is required"}, status=400)
+    user = request.user  # get user from JWT
 
     try:
-        user = User.objects.get(username=username)
-
         # Get or create incomplete attempt
         attempt, created = ExamAttempt.objects.get_or_create(user=user, completed=False)
 
@@ -223,7 +251,6 @@ def get_exam_questions(request):
             questions = data.get("questions", [])
             exam_settings = data.get("exam_settings", {"timer": 0, "marks_per_question": 0})
 
-            # Only send question text and options
             question_list = [
                 {"id": q["id"], "question": q["question"], "options": q["options"]}
                 for q in questions
@@ -233,11 +260,9 @@ def get_exam_questions(request):
             "questions": question_list,
             "exam_settings": exam_settings,
             "attempt_id": attempt.id,
-            "saved_answers": attempt.answers  # previously saved answers
+            "saved_answers": attempt.answers
         })
 
-    except User.DoesNotExist:
-        return JsonResponse({"error": "User not found"}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
@@ -247,35 +272,34 @@ def get_exam_questions(request):
 
 
 
-from rest_framework.decorators import api_view
-from django.http import JsonResponse
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from django.contrib.auth.models import User
 from .models import ExamAttempt
 import json
-from django.utils import timezone
-import psycopg2
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def save_answer(request):
     """
-    Save or update an answer for a question.
-    Expected POST data: 
+    Save or update an answer for a question (JWT-protected).
+    Expected POST data:
     {
-        "username": "user1",
         "question_id": 1,
         "selected_option": "A"
     }
     """
     try:
         data = json.loads(request.body.decode("utf-8"))
-        username = data.get("username")
-        question_id = str(data.get("question_id"))  # store as string key in answers dict
+        question_id = str(data.get("question_id"))
         selected_option = data.get("selected_option")
 
-        if not username or question_id is None or selected_option is None:
-            return JsonResponse({"error": "username, question_id and selected_option are required"}, status=400)
+        if question_id is None or selected_option is None:
+            return Response({"error": "question_id and selected_option are required"}, status=400)
 
-        user = User.objects.get(username=username)
+        user = request.user  # get authenticated user
 
         # Get latest incomplete attempt or create new
         attempt, created = ExamAttempt.objects.get_or_create(user=user, completed=False)
@@ -286,41 +310,35 @@ def save_answer(request):
         attempt.answers = answers
         attempt.save()
 
-        return JsonResponse({"message": "Answer saved successfully", "answers": attempt.answers}, status=200)
+        return Response({"message": "Answer saved successfully", "answers": attempt.answers}, status=200)
 
-    except User.DoesNotExist:
-        return JsonResponse({"error": "User not found"}, status=404)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        return Response({"error": str(e)}, status=500)
 
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.utils import timezone
+from django.conf import settings
+import json
+from .models import ExamAttempt
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def submit_exam(request):
     """
-    Submit the exam for evaluation.
-    Expected POST data: 
-    {
-        "username": "user1",
-        "answers": {"1": "Paris", "2": "Queue", ...}  # all selected answers
-    }
+    Submit the exam for evaluation (JWT protected).
     """
     try:
-        data = json.loads(request.body.decode("utf-8"))
-        username = data.get("username")
+        data = request.data  # DRF automatically parses JSON
         submitted_answers = data.get("answers", {})
-        print("Submitted answers:", submitted_answers)
 
-        if not username:
-            return JsonResponse({"error": "username is required"}, status=400)
-
-        user = User.objects.get(username=username)
-
-        # Get latest incomplete attempt
+        user = request.user  # get user from JWT
         attempt = ExamAttempt.objects.filter(user=user, completed=False).last()
         if not attempt:
-            return JsonResponse({"error": "No ongoing exam attempt found"}, status=404)
+            return Response({"error": "No ongoing exam attempt found"}, status=404)
 
-        # Save submitted answers
         attempt.answers = submitted_answers
 
         # Load exam questions
@@ -330,12 +348,11 @@ def submit_exam(request):
             with open(json_path, "r", encoding="utf-8") as f:
                 exam_data = json.load(f)
                 marks_per_question = exam_data.get("exam_settings", {}).get("marks_per_question", 0)
-                
-                # Evaluate score
+
                 for q in exam_data.get("questions", []):
                     qid = str(q["id"])
                     selected = submitted_answers.get(qid)
-                    correct = q.get("answer")  # <--- use 'answer' from JSON
+                    correct = q.get("answer")
                     if selected == correct:
                         total_score += marks_per_question
 
@@ -344,40 +361,25 @@ def submit_exam(request):
         attempt.submitted_at = timezone.now()
         attempt.save()
 
-        return JsonResponse({
+        return Response({
             "message": "Exam submitted successfully",
             "answers": attempt.answers,
             "total_score": total_score
         }, status=200)
 
-    except User.DoesNotExist:
-        return JsonResponse({"error": "User not found"}, status=404)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        return Response({"error": str(e)}, status=500)
 
 
 
 
-from rest_framework.decorators import api_view
-from django.http import JsonResponse
-from .models import ExamAttempt
-from django.contrib.auth.models import User
-from django.contrib.auth.models import User
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-
-from .models import ExamAttempt  # your model
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_test_result(request):
-    username = request.GET.get("username")
-    if not username:
-        return Response({"error": "username is required"}, status=400)
-
+    user = request.user  # JWT-authenticated user
     try:
-        user = User.objects.get(username=username)
         attempt = ExamAttempt.objects.filter(user=user, completed=True).order_by('-submitted_at').first()
-        print("Fetched attempt:", attempt)
         if not attempt:
             return Response({"error": "No completed exam found"}, status=404)
 
@@ -388,5 +390,5 @@ def get_test_result(request):
             "submitted_at": attempt.submitted_at,
         })
 
-    except User.DoesNotExist:
-        return Response({"error": "User not found"}, status=404)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)

@@ -1,8 +1,10 @@
+// src/pages/RegisterPage.js
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function RegisterPage() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -11,63 +13,102 @@ function RegisterPage() {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const navigate = useNavigate();
 
-  // Handle input change
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
 
     try {
-      const res = await axios.post("http://127.0.0.1:8000/api/register/", formData);
-      setSuccess(res.data.message);
-      setTimeout(() => {
-        navigate("/login"); // redirect to login page after success
-      }, 1500);
+      const response = await axios.post("http://127.0.0.1:8000/api/register/", formData, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.status === 201) {
+        setSuccess("User registered successfully! Redirecting to login...");
+        setTimeout(() => navigate("/login"), 2000);
+      }
     } catch (err) {
       if (err.response && err.response.data.error) {
         setError(err.response.data.error);
       } else {
-        setError("Something went wrong. Try again.");
+        setError("Something went wrong. Please try again.");
       }
     }
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: "50px" }}>
-      <h2>Register</h2>
-      <form onSubmit={handleSubmit} style={{ display: "inline-block", textAlign: "left" }}>
-        <div style={{ marginBottom: "10px" }}>
-          <label>Username:</label><br />
-          <input type="text" name="username" value={formData.username} onChange={handleChange} required />
-        </div>
-        <div style={{ marginBottom: "10px" }}>
-          <label>Email:</label><br />
-          <input type="email" name="email" value={formData.email} onChange={handleChange} required />
-        </div>
-        <div style={{ marginBottom: "10px" }}>
-          <label>Password:</label><br />
-          <input type="password" name="password" value={formData.password} onChange={handleChange} required />
-        </div>
-        <div style={{ marginBottom: "10px" }}>
-          <label>Confirm Password:</label><br />
-          <input type="password" name="confirm_password" value={formData.confirm_password} onChange={handleChange} required />
-        </div>
-        <button type="submit">Register</button>
-      </form>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-200 to-purple-300">
+      <div className="bg-white shadow-md rounded-lg p-8 w-full max-w-md">
+        <h2 className="text-2xl font-bold text-center text-indigo-700 mb-6">
+          Create an Account
+        </h2>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {success && <p style={{ color: "green" }}>{success}</p>}
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        {success && <p className="text-green-600 text-center mb-4">{success}</p>}
 
-      {/* Navigation Links */}
-      <div style={{ marginTop: "20px" }}>
-        <Link to="/">🏠 Home</Link> | <Link to="/login">🔑 Login</Link>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            name="username"
+            placeholder="Username"
+            value={formData.username}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+            required
+          />
+
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+            required
+          />
+
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+            required
+          />
+
+          <input
+            type="password"
+            name="confirm_password"
+            placeholder="Confirm Password"
+            value={formData.confirm_password}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+            required
+          />
+
+          <button
+            type="submit"
+            className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition"
+          >
+            Register
+          </button>
+        </form>
+
+        <p className="text-center text-gray-600 mt-4">
+          Already have an account?{" "}
+          <Link to="/login" className="text-indigo-600 hover:underline">
+            Login
+          </Link>
+        </p>
       </div>
     </div>
   );

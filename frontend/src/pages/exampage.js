@@ -1,3 +1,4 @@
+// src/pages/ExamPage.js
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Layout from "../components/layout";
@@ -11,30 +12,33 @@ function ExamPage() {
   const [answers, setAnswers] = useState({});
   const navigate = useNavigate();
 
+  const accessToken = localStorage.getItem("access_token");
+
   // Fetch exam questions
   useEffect(() => {
-    const username = localStorage.getItem("username");
-    if (!username) {
+    if (!accessToken) {
       navigate("/login");
       return;
     }
 
     axios
-      .get(`http://127.0.0.1:8000/api/exam/?username=${username}`)
+      .get("http://127.0.0.1:8000/api/exam/", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
       .then((res) => {
         if (res.data.questions && res.data.questions.length > 0) {
           setQuestions(res.data.questions);
 
-          // Load timer from localStorage if exists, else backend timer
+          // Timer
           const savedTimer = parseInt(localStorage.getItem("exam_timer"), 10);
           const backendTimer = res.data.exam_settings["timer in minutes"] * 60;
           setTimer(!isNaN(savedTimer) ? savedTimer : backendTimer);
 
-          // Load saved answers
+          // Saved answers
           const savedAnswers = JSON.parse(localStorage.getItem("exam_answers") || "{}");
           setAnswers(savedAnswers);
 
-          // Load current question index
+          // Current question index
           const savedIndex = parseInt(localStorage.getItem("exam_current_index"), 10);
           setCurrentIndex(!isNaN(savedIndex) ? savedIndex : 0);
         }
@@ -42,9 +46,15 @@ function ExamPage() {
       })
       .catch((err) => {
         console.error(err);
-        setLoading(false);
+        if (err.response && err.response.status === 401) {
+          // Token invalid or expired
+          localStorage.clear();
+          navigate("/login");
+        } else {
+          setLoading(false);
+        }
       });
-  }, [navigate]);
+  }, [accessToken, navigate]);
 
   // Timer countdown
   useEffect(() => {
@@ -54,11 +64,7 @@ function ExamPage() {
       setTimer((prev) => {
         const newTime = prev - 1;
         localStorage.setItem("exam_timer", newTime);
-
-        if (newTime <= 0) {
-          handleSubmit();
-        }
-
+        if (newTime <= 0) handleSubmit();
         return newTime;
       });
     }, 1000);
@@ -66,10 +72,22 @@ function ExamPage() {
     return () => clearInterval(interval);
   }, [timer, questions]);
 
+  // Save answer to state, localStorage, and backend
   const handleAnswer = (option) => {
-    const updatedAnswers = { ...answers, [questions[currentIndex].id]: option };
+    const questionId = questions[currentIndex].id;
+    const updatedAnswers = { ...answers, [questionId]: option };
     setAnswers(updatedAnswers);
     localStorage.setItem("exam_answers", JSON.stringify(updatedAnswers));
+
+    // Save to backend
+    axios
+      .post(
+        "http://127.0.0.1:8000/api/save_answer/",
+        { question_id: questionId, selected_option: option },
+        { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" } }
+      )
+      .then((res) => console.log("Answer saved:", res.data))
+      .catch((err) => console.error("Failed to save answer:", err.response?.data || err.message));
   };
 
   const handleNext = () => {
@@ -88,38 +106,34 @@ function ExamPage() {
     }
   };
 
-
   const handleSubmit = () => {
-  const username = localStorage.getItem("username");
-  if (!username) return;
+    if (!accessToken) return;
 
-  // Get saved answers from localStorage (or state)
-  const answers = JSON.parse(localStorage.getItem("exam_answers") || "{}");
+    const savedAnswers = JSON.parse(localStorage.getItem("exam_answers") || "{}");
 
-  // Send POST request with username and answers
-  axios
-    .post("http://127.0.0.1:8000/api/submit_exam/", { 
-      username, 
-      answers 
-    })
-    .then((res) => {
-      alert(res.data.message || "Exam submitted!");
-      console.log("Submitted answers:", res.data.answers);
-
-      // Clear localStorage
-      localStorage.removeItem("exam_answers");
-      localStorage.removeItem("exam_timer");
-      localStorage.removeItem("exam_current_index");
-
-      navigate("/dashboard");
-    })
-    .catch((err) => {
-      console.error(err);
-      alert(err.response?.data?.error || "Failed to submit exam");
-    });
-};
-
-
+    axios
+      .post(
+        "http://127.0.0.1:8000/api/submit_exam/",
+        { answers: savedAnswers },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      )
+      .then((res) => {
+        alert(res.data.message || "Exam submitted!");
+        localStorage.removeItem("exam_answers");
+        localStorage.removeItem("exam_timer");
+        localStorage.removeItem("exam_current_index");
+        navigate("/dashboard");
+      })
+      .catch((err) => {
+        console.error(err);
+        if (err.response && err.response.status === 401) {
+          localStorage.clear();
+          navigate("/login");
+        } else {
+          alert(err.response?.data?.error || "Failed to submit exam");
+        }
+      });
+  };
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -135,42 +149,36 @@ function ExamPage() {
 
   return (
     <Layout>
-      <div style={{ textAlign: "center", marginTop: "20px" }}>
+      <div className="text-center mt-5">
         <h2>Exam</h2>
-        <div style={{ marginBottom: "10px" }}>
+        <div className="mb-3">
           <strong>Time Remaining: {formatTime(timer)}</strong>
         </div>
 
-        <div style={{ border: "1px solid #ccc", padding: "20px", borderRadius: "6px", maxWidth: "600px", margin: "0 auto" }}>
-          <p>
-            <strong>Question {currentIndex + 1}:</strong> {question.question}
-          </p>
-
-          {question.options && (
-            <ul style={{ listStyleType: "none", padding: 0 }}>
-              {question.options.map((opt, idx) => (
-                <li key={idx} style={{ margin: "5px 0" }}>
-                  <label>
-                    <input
-                      type="radio"
-                      name={`q_${currentIndex}`}
-                      value={opt}
-                      checked={selectedOption === opt}
-                      onChange={() => handleAnswer(opt)}
-                    />{" "}
-                    {opt}
-                  </label>
-                </li>
-              ))}
-            </ul>
-          )}
+        <div className="border p-5 rounded max-w-2xl mx-auto">
+          <p><strong>Question {currentIndex + 1}:</strong> {question.question}</p>
+          <ul className="list-none p-0">
+            {question.options.map((opt, idx) => (
+              <li key={idx} className="my-2">
+                <label>
+                  <input
+                    type="radio"
+                    name={`q_${currentIndex}`}
+                    value={opt}
+                    checked={selectedOption === opt}
+                    onChange={() => handleAnswer(opt)}
+                  />{" "}
+                  {opt}
+                </label>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div style={{ marginTop: "15px" }}>
-          <button onClick={handlePrev} disabled={currentIndex === 0} style={{ marginRight: "10px" }}>
+        <div className="mt-5">
+          <button onClick={handlePrev} disabled={currentIndex === 0} className="mr-3">
             Previous
           </button>
-
           {currentIndex === questions.length - 1 ? (
             <button onClick={handleSubmit}>Submit Exam</button>
           ) : (
