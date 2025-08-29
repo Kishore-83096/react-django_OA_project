@@ -317,15 +317,6 @@ def save_answer(request):
 
 
 
-import json
-from django.utils import timezone
-from django.conf import settings
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from .models import ExamAttempt
-
-
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def submit_exam(request):
