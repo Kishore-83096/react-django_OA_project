@@ -37,6 +37,16 @@ def get_data(request):
     return Response({"message": "This a test!"})
 
 
+
+
+
+
+
+
+
+
+
+
 @api_view(["GET"])
 @authentication_classes([])
 @permission_classes([AllowAny])
@@ -48,10 +58,19 @@ def welcome(request):
     })
 
 
+
+
+
+
+
+
+
+
+
+
 # =========================================================
 #                AUTHENTICATION
 # =========================================================
-
 @api_view(["POST"])
 @authentication_classes([])
 @permission_classes([AllowAny])
@@ -90,6 +109,16 @@ def register_user(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+
+
+
+
 
 
 @api_view(["POST"])
@@ -134,10 +163,19 @@ def login_user(request):
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+
+
+
+
+
+
+
+
+
 # =========================================================
 #                USER DASHBOARD
 # =========================================================
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def user_dashboard(request):
@@ -177,10 +215,20 @@ def user_dashboard(request):
     })
 
 
+
+
+
+
+
+
+
+
+
+
+
 # =========================================================
 #                EXAM FLOW
 # =========================================================
-
 from rest_framework.response import Response
 
 @api_view(["GET"])
@@ -213,6 +261,16 @@ def get_exam_questions(request):
 
 
 
+
+
+
+
+
+
+
+
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def save_answer(request):
@@ -238,6 +296,17 @@ def save_answer(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+
+
+
+
+
+
+
+
+
+
 
 
 @api_view(["POST"])
@@ -276,6 +345,16 @@ def submit_exam(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+
+
+
+
+
+
+
+
+
 
 
 @api_view(["GET"])
