@@ -1,7 +1,7 @@
 {
   "exam_settings": {
-    "timer in minutes": 1,   
-    "marks_per_question": 15
+    "timer in minutes": 60,
+    "marks_per_question": 1
   },
   "questions": [
     {
@@ -21,6 +21,288 @@
       "question": "React is mainly used for?",
       "options": ["Database", "Styling", "Frontend UI", "Operating System"],
       "answer": "Frontend UI"
+    },
+    {
+      "id": 4,
+      "question": "Which planet is known as the Red Planet?",
+      "options": ["Earth", "Mars", "Jupiter", "Venus"],
+      "answer": "Mars"
+    },
+    {
+      "id": 5,
+      "question": "Who developed Python programming language?",
+      "options": ["Guido van Rossum", "James Gosling", "Bjarne Stroustrup", "Dennis Ritchie"],
+      "answer": "Guido van Rossum"
+    },
+    {
+      "id": 6,
+      "question": "Which keyword is used to define a function in Python?",
+      "options": ["func", "def", "function", "define"],
+      "answer": "def"
+    },
+    {
+      "id": 7,
+      "question": "What is the time complexity of binary search?",
+      "options": ["O(n)", "O(log n)", "O(n log n)", "O(1)"],
+      "answer": "O(log n)"
+    },
+    {
+      "id": 8,
+      "question": "Which country is known as the Land of Rising Sun?",
+      "options": ["China", "Japan", "Thailand", "Korea"],
+      "answer": "Japan"
+    },
+    {
+      "id": 9,
+      "question": "HTML stands for?",
+      "options": ["HyperText Markup Language", "HighText Machine Language", "Hyper Transfer Markup Language", "Hyperlink Mark Language"],
+      "answer": "HyperText Markup Language"
+    },
+    {
+      "id": 10,
+      "question": "In which year was Java first released?",
+      "options": ["1990", "1991", "1995", "2000"],
+      "answer": "1995"
+    },
+    {
+      "id": 11,
+      "question": "Which gas is essential for human respiration?",
+      "options": ["Oxygen", "Carbon Dioxide", "Nitrogen", "Helium"],
+      "answer": "Oxygen"
+    },
+    {
+      "id": 12,
+      "question": "Which data structure uses LIFO (Last In First Out)?",
+      "options": ["Queue", "Stack", "Array", "Graph"],
+      "answer": "Stack"
+    },
+    {
+      "id": 13,
+      "question": "What is the largest mammal in the world?",
+      "options": ["Elephant", "Blue Whale", "Shark", "Giraffe"],
+      "answer": "Blue Whale"
+    },
+    {
+      "id": 14,
+      "question": "Which SQL command is used to remove a record?",
+      "options": ["REMOVE", "DELETE", "DROP", "CLEAR"],
+      "answer": "DELETE"
+    },
+    {
+      "id": 15,
+      "question": "CSS is used for?",
+      "options": ["Structuring web pages", "Styling web pages", "Server-side scripting", "Database management"],
+      "answer": "Styling web pages"
+    },
+    {
+      "id": 16,
+      "question": "Which language is primarily used for iOS app development?",
+      "options": ["Java", "Swift", "Kotlin", "Python"],
+      "answer": "Swift"
+    },
+    {
+      "id": 17,
+      "question": "Who is known as the father of computers?",
+      "options": ["Alan Turing", "Charles Babbage", "John von Neumann", "Bill Gates"],
+      "answer": "Charles Babbage"
+    },
+    {
+      "id": 18,
+      "question": "Which operator is used for exponentiation in Python?",
+      "options": ["^", "**", "pow", "//"],
+      "answer": "**"
+    },
+    {
+      "id": 19,
+      "question": "Which protocol is used to send emails?",
+      "options": ["HTTP", "SMTP", "FTP", "IMAP"],
+      "answer": "SMTP"
+    },
+    {
+      "id": 20,
+      "question": "Which symbol is used for comments in Python?",
+      "options": ["//", "#", "/* */", "--"],
+      "answer": "#"
+    },
+    {
+      "id": 21,
+      "question": "What is the chemical symbol for Gold?",
+      "options": ["Ag", "Au", "Gd", "Go"],
+      "answer": "Au"
+    },
+    {
+      "id": 22,
+      "question": "Which sorting algorithm is fastest on average?",
+      "options": ["Bubble Sort", "Selection Sort", "Quick Sort", "Insertion Sort"],
+      "answer": "Quick Sort"
+    },
+    {
+      "id": 23,
+      "question": "What does RAM stand for?",
+      "options": ["Read Access Memory", "Random Access Memory", "Run All Memory", "Rapid Action Memory"],
+      "answer": "Random Access Memory"
+    },
+    {
+      "id": 24,
+      "question": "Who painted the Mona Lisa?",
+      "options": ["Pablo Picasso", "Leonardo da Vinci", "Michelangelo", "Raphael"],
+      "answer": "Leonardo da Vinci"
+    },
+    {
+      "id": 25,
+      "question": "Which company developed the C programming language?",
+      "options": ["Microsoft", "Bell Labs", "IBM", "Google"],
+      "answer": "Bell Labs"
+    },
+    {
+      "id": 26,
+      "question": "Which is the smallest prime number?",
+      "options": ["0", "1", "2", "3"],
+      "answer": "2"
+    },
+    {
+      "id": 27,
+      "question": "Which tag is used to create a hyperlink in HTML?",
+      "options": ["<a>", "<link>", "<href>", "<url>"],
+      "answer": "<a>"
+    },
+    {
+      "id": 28,
+      "question": "Who is the founder of Microsoft?",
+      "options": ["Steve Jobs", "Bill Gates", "Mark Zuckerberg", "Larry Page"],
+      "answer": "Bill Gates"
+    },
+    {
+      "id": 29,
+      "question": "Which data type is immutable in Python?",
+      "options": ["List", "Dictionary", "Set", "Tuple"],
+      "answer": "Tuple"
+    },
+    {
+      "id": 30,
+      "question": "Which is the longest river in the world?",
+      "options": ["Amazon", "Nile", "Yangtze", "Mississippi"],
+      "answer": "Nile"
+    },
+    {
+      "id": 31,
+      "question": "What is the output of 2 ** 3 in Python?",
+      "options": ["5", "6", "8", "9"],
+      "answer": "8"
+    },
+    {
+      "id": 32,
+      "question": "Which programming language is also known as 'mother of all languages'?",
+      "options": ["C", "Assembly", "FORTRAN", "Java"],
+      "answer": "C"
+    },
+    {
+      "id": 33,
+      "question": "Which device is used to connect multiple networks?",
+      "options": ["Router", "Switch", "Hub", "Repeater"],
+      "answer": "Router"
+    },
+    {
+      "id": 34,
+      "question": "What does OOP stand for?",
+      "options": ["Object Operating Program", "Object Oriented Programming", "Order of Processing", "Optimal Operating Program"],
+      "answer": "Object Oriented Programming"
+    },
+    {
+      "id": 35,
+      "question": "What is the national currency of Japan?",
+      "options": ["Dollar", "Won", "Yen", "Peso"],
+      "answer": "Yen"
+    },
+    {
+      "id": 36,
+      "question": "Which of these is a frontend JavaScript framework?",
+      "options": ["Django", "React", "Spring", "Laravel"],
+      "answer": "React"
+    },
+    {
+      "id": 37,
+      "question": "Which symbol is used to denote IDs in CSS?",
+      "options": [".", "#", "*", "&"],
+      "answer": "#"
+    },
+    {
+      "id": 38,
+      "question": "What is 101 in binary equal to in decimal?",
+      "options": ["5", "6", "4", "3"],
+      "answer": "5"
+    },
+    {
+      "id": 39,
+      "question": "Which country invented paper?",
+      "options": ["India", "China", "Egypt", "Greece"],
+      "answer": "China"
+    },
+    {
+      "id": 40,
+      "question": "What is the default port of HTTP?",
+      "options": ["21", "25", "80", "443"],
+      "answer": "80"
+    },
+    {
+      "id": 41,
+      "question": "What is the square root of 144?",
+      "options": ["10", "11", "12", "14"],
+      "answer": "12"
+    },
+    {
+      "id": 42,
+      "question": "Which one is a NoSQL database?",
+      "options": ["MySQL", "PostgreSQL", "MongoDB", "SQLite"],
+      "answer": "MongoDB"
+    },
+    {
+      "id": 43,
+      "question": "Who discovered gravity?",
+      "options": ["Einstein", "Newton", "Galileo", "Tesla"],
+      "answer": "Newton"
+    },
+    {
+      "id": 44,
+      "question": "Which HTML tag is used to display images?",
+      "options": ["<pic>", "<image>", "<img>", "<src>"],
+      "answer": "<img>"
+    },
+    {
+      "id": 45,
+      "question": "What is 15 % 4 in Python?",
+      "options": ["2", "3", "1", "0"],
+      "answer": "3"
+    },
+    {
+      "id": 46,
+      "question": "What is the capital of Australia?",
+      "options": ["Sydney", "Melbourne", "Canberra", "Perth"],
+      "answer": "Canberra"
+    },
+    {
+      "id": 47,
+      "question": "Which is the smallest continent?",
+      "options": ["Europe", "Australia", "Antarctica", "South America"],
+      "answer": "Australia"
+    },
+    {
+      "id": 48,
+      "question": "What does API stand for?",
+      "options": ["Application Programming Interface", "Advanced Program Interaction", "Applied Protocol Integration", "Application Processing Instruction"],
+      "answer": "Application Programming Interface"
+    },
+    {
+      "id": 49,
+      "question": "Which function is used to read input from the user in Python?",
+      "options": ["scan()", "input()", "read()", "gets()"],
+      "answer": "input()"
+    },
+    {
+      "id": 50,
+      "question": "Which keyword is used to inherit a class in Python?",
+      "options": ["inherit", "extends", "super", "class"],
+      "answer": "class"
     }
   ]
 }

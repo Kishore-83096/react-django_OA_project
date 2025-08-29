@@ -230,6 +230,12 @@ def user_dashboard(request):
 #                EXAM FLOW
 # =========================================================
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from django.conf import settings
+import json
+from .models import ExamAttempt
+
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -238,6 +244,7 @@ def get_exam_questions(request):
     user = request.user
     try:
         attempt, _ = ExamAttempt.objects.get_or_create(user=user, completed=False)
+
         json_path = (settings.BASE_DIR / "Core" / "exam" / "questions.json").resolve()
         if not json_path.exists():
             return Response({"error": "Exam not found"}, status=404)
@@ -253,11 +260,12 @@ def get_exam_questions(request):
             "questions": questions,
             "exam_settings": data.get("exam_settings", {"timer": 0, "marks_per_question": 0}),
             "attempt_id": attempt.id,
-            "saved_answers": attempt.answers
+            "saved_attempts": attempt.question_attempts  # updated ✅
         })
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
 
 
 
@@ -309,38 +317,68 @@ def save_answer(request):
 
 
 
+import json
+from django.utils import timezone
+from django.conf import settings
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .models import ExamAttempt
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def submit_exam(request):
     """Submit exam, evaluate score, and mark attempt completed."""
     try:
-        submitted_answers = request.data.get("answers", {})
+        submitted_answers = request.data.get("answers", {})  # { "1": "Berlin", "2": "Queue", ... }
+
+        # Get last ongoing attempt
         attempt = ExamAttempt.objects.filter(user=request.user, completed=False).last()
         if not attempt:
             return Response({"error": "No ongoing exam attempt found"}, status=404)
 
-        attempt.answers = submitted_answers
-        total_score = 0
-
         json_path = (settings.BASE_DIR / "Core" / "exam" / "questions.json").resolve()
-        if json_path.exists():
-            with open(json_path, "r", encoding="utf-8") as f:
-                exam_data = json.load(f)
-                marks_per_question = exam_data.get("exam_settings", {}).get("marks_per_question", 0)
+        if not json_path.exists():
+            return Response({"error": "Questions file not found"}, status=404)
 
-                for q in exam_data.get("questions", []):
-                    if submitted_answers.get(str(q["id"])) == q.get("answer"):
-                        total_score += marks_per_question
+        with open(json_path, "r", encoding="utf-8") as f:
+            exam_data = json.load(f)
 
-        attempt.total_score = total_score
+        marks_per_question = exam_data.get("exam_settings", {}).get("marks_per_question", 0)
+        total_marks = len(exam_data.get("questions", [])) * marks_per_question
+
+        obtained_score = 0
+        question_attempts = []
+
+        # Evaluate answers
+        for q in exam_data.get("questions", []):
+            qid = str(q["id"])
+            chosen_option = submitted_answers.get(qid)
+            correct_answer = q.get("answer")
+
+            if chosen_option == correct_answer:
+                obtained_score += marks_per_question
+
+            question_attempts.append({
+                "question_id": q["id"],
+                "question": q["question"],
+                "chosen_option": chosen_option,
+                "correct_answer": correct_answer
+            })
+
+        # Save attempt
+        attempt.obtained_score = obtained_score
+        attempt.total_marks = total_marks
+        attempt.question_attempts = question_attempts
         attempt.completed = True
         attempt.submitted_at = timezone.now()
         attempt.save()
 
         return Response({
             "message": "Exam submitted successfully",
-            "answers": attempt.answers,
-            "total_score": total_score
+            "score": f"{obtained_score}/{total_marks}",
+            "question_attempts": question_attempts
         })
 
     except Exception as e:
@@ -356,22 +394,31 @@ def submit_exam(request):
 
 
 
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_test_result(request):
-    """Fetch latest completed exam result for authenticated user."""
+    """Fetch all completed exam results for authenticated user."""
     try:
-        attempt = ExamAttempt.objects.filter(user=request.user, completed=True).order_by('-submitted_at').first()
-        if not attempt:
-            return Response({"error": "No completed exam found"}, status=404)
+        attempts = ExamAttempt.objects.filter(
+            user=request.user, completed=True
+        ).order_by('-submitted_at')
 
-        return Response({
-            "username": request.user.username,
-            "total_score": attempt.total_score,
-            "answers": attempt.answers,
-            "submitted_at": attempt.submitted_at,
-        })
+        results = []
+        for attempt in attempts:
+            results.append({
+                "username": request.user.username,
+                "attempt_id": attempt.id,
+                "score": f"{attempt.obtained_score}/{attempt.total_marks}",
+                "obtained_score": attempt.obtained_score,
+                "total_marks": attempt.total_marks,
+                "completed": attempt.completed,
+                "started_at": attempt.started_at,
+                "submitted_at": attempt.submitted_at,
+                "question_attempts": attempt.question_attempts
+            })
+
+        # Always return a list, even if empty
+        return Response(results, status=200)
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
